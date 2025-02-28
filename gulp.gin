@@ -1,0 +1,15 @@
+opti conjugate conp diff comp c6
+title
+ASE calculation
+end
+
+cell
+ 3.899000  3.899000  3.899000 90.00000 90.00000 90.00000
+frac
+ Sr core  0.5000000   0.5000000   0.5000000
+ Ti core  0.0000000   0.0000000   0.0000000
+ O  core  0.5000000   0.0000000   0.0000000
+ O  core  0.0000000   0.5000000   0.0000000
+ O  core  0.0000000   0.0000000   0.5000000
+
+library data/SrTiO/buck.lib
