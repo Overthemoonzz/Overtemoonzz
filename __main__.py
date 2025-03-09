@@ -88,14 +88,18 @@ settings = {
     'SrTiO_2_ml': {'test': False, 'multiple': 2, 'group': 195, 'top': 1, 'grid': 8, 'use_ml': True},
 }
 
+# file path
+results_dir = Path('/home/yanghn/Application/src/work')
+output_dir = Path('/home/yanghn/Application/src/work')
 
 def process_results(lib, results, ions_count, test_name, printing=False):
     """
     Process and relax solutions from the integer program using M3GNET.
     The 'lib' parameter is no longer used.
     """
-    # Initialize the results directory
-    results_dir = Path('/home/yanghn/Application/src/work')
+    # Create test-specific directory
+    test_dir = results_dir / "results" / test_name
+    os.makedirs(test_dir, exist_ok=True)
     
     # Initialize the M3GNET relaxer (load the PES model)
     pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
@@ -132,17 +136,17 @@ def process_results(lib, results, ions_count, test_name, printing=False):
             print("M3GNET received a bad solution. The structure may not satisfy constraints.")
     
     count = 1
-    with open(os.path.join("results_dir", "results", test_name, "energies.txt"), "w+") as f:
+    with open(test_dir / "energies.txt", "w+") as f:
         for i in range(len(results)):
             if final[i] is not None:
                 print(f"Solution{count}: Energy initial: {init[i]}  final: {final[i]}")
                 print(f"Solution{count}: Energy initial: {init[i]}  final: {final[i]}", file=f)
                 # Save the original lattice (IP allocation)
-                ase.io.write(os.path.join("results_dir", "results", test_name, f'solution{count}_lattice.vasp'), results_ip[i])
+                ase.io.write(os.path.join(results_dir, "results", test_name, f'solution{count}_predicted.vasp'), results_ip[i])
                 # Convert the relaxed final structure (pymatgen Structure) back to ASE Atoms and save it
                 final_structure = relax_results_list[i]["final_structure"]
                 final_atoms = AseAtomsAdaptor.get_atoms(final_structure)
-                ase.io.write(os.path.join("results_dir", "results", test_name, f'solution{count}_minimised.vasp'), final_atoms)
+                ase.io.write(os.path.join(results_dir, "results", test_name, f'solution{count}_minimised.vasp'), final_atoms)
                 count += 1
     
     print("The lowest found energy is", best_val, "eV")
@@ -177,8 +181,6 @@ def get_cif_energies(filename, format='cif'):
 
 
 def benchmark():
-    # Prepare a folder for results
-    output_dir = Path('/home/yanghn/Application/src/work')
     if not os.path.exists(output_dir / 'results'):
         os.makedirs(output_dir / 'results')
     else:
@@ -224,7 +226,7 @@ def benchmark():
             top = test_params['top']
             multiple = test_params.get('multiple', 1)
             ml_enabled = test_params.get('use_ml', False)
-            
+            print(ml_enabled)
             print('Test: {0}, Grid: {1}, Group: {2}, Top {3}, Multiple {4}'.format(test_name, grid, group, top, multiple))
             
             if ml_enabled:
@@ -261,7 +263,7 @@ def benchmark():
                                         ions_count=ions_count, test_name=test_name)
             
             # Get reference energy from CIF file
-            ref_filename = f"{lib}.cif"
+            ref_filename = f"SrTiO3.cif"
             energy = get_cif_energies(filename=ref_filename)
             if multiple > 1:
                 energy = energy * multiple
